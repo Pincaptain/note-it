@@ -109,6 +109,10 @@ class DiscordExtension(discord.Client):
                 await self.delete(message, params)
             elif keyword == 'help':
                 await self.help(message)
+            elif keyword == 'get':
+                await self.get(message, params)
+            elif keyword == 'getall':
+                await self.get(message, params)
             else:
                 await self.error(message, 'Command not found. Use "!ni help" for more info!')
 
@@ -118,7 +122,6 @@ class DiscordExtension(discord.Client):
 
         :param message: Instance of the discord message that triggered the error. (discord.Message)
         :param params: Message parameters/note attributes. (List[String])
-        :return: Returns the created note.
         """
 
         if len(params) != 5:
@@ -146,7 +149,6 @@ class DiscordExtension(discord.Client):
 
         :param message: Instance of the discord message that triggered the error. (discord.Message)
         :param params: Message parameters/note attributes. (List[String])
-        :return: Returns the number of deleted notes.
         """
 
         if len(params) != 3:
@@ -178,7 +180,6 @@ class DiscordExtension(discord.Client):
 
         :param message: Instance of the discord message that triggered the error. (discord.Message)
         :param params: Message parameters/note attributes. (List[String])
-        :return: Returns the number of deleted notes.
         """
 
         if len(params) != 6:
@@ -208,6 +209,41 @@ class DiscordExtension(discord.Client):
 
             await message.author.send(response)
 
+    async def get(self, message: discord.Message, params: list):
+        """
+        Based on the id provided in the parameters list the function returns a single note or error.
+
+        :param message: Instance of the discord message that triggered the error. (discord.Message)
+        :param params: Message parameters/note attributes. (List[String])
+        """
+
+        if len(params) != 3:
+            await self.error(message, 'Get command takes exactly 1 parameters!')
+
+            return
+
+        id = params[2]
+        note = self.note_repository.get(id=id)
+        response = note.to_json()
+
+        await message.author.send(response)
+
+    async def get_all(self, message: discord.Message, params: list):
+        """
+        Obtains all the notes from database and returns them to the sender.
+
+        :param message: Instance of the discord message that triggered the error. (discord.Message)
+        :param params: Message parameters/note attributes. (List[String])
+        """
+
+        if len(params) != 2:
+            await self.error(message, 'Get all command takes no parameters!')
+
+        notes = self.note_repository.get_many()
+        response = notes.to_json()
+
+        await message.author.send(response)
+
     async def help(self, message: discord.Message):
         """
         Returns an array of commands available at the moment.
@@ -220,7 +256,9 @@ class DiscordExtension(discord.Client):
                 '!ni:help - Lists all the available commands.',
                 '!ni:add:${title}:${body}:${tags(a,b)} - Adds a new note to the database.',
                 '!ni:delete:${id} - Removes a note from the database.',
-                '!ni:patch:${id}:${title}:${body}:${tags(a,b)} - Updates a note from the database.'
+                '!ni:patch:${id}:${title}:${body}:${tags(a,b)} - Updates a note from the database.',
+                '!ni:get:${id} - Gets a single note with the specified id from database.',
+                '!ni:getall - Gets all the notes from database. Beware! This command is very volatile.'
             ]
         })
 

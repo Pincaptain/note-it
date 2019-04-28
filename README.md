@@ -7,7 +7,7 @@
 1. Enter the folder with cmd/bash
 2. Enter <code>pipenv install</code>
 3. Enter <code>pipenv shell</code>
-3. Enter <code>python/python3 start.py host(default=localhost) port(default=5000)</code>
+3. Enter <code>python/python3 start.py</code>
 
 ### Author
  - Borjan Gjorovski <borjan.gjorovski@outlook.com>

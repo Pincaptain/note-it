@@ -95,7 +95,6 @@ class DiscordExtension(discord.Client):
             # Check if the parameters contain a keyword
             if len(params) <= 1:
                 await self.error(message, 'Invalid number of parameters! Type !ni:help for more info.')
-
                 return
 
             # Act based on the keyword parameter
@@ -112,7 +111,7 @@ class DiscordExtension(discord.Client):
             elif keyword == 'get':
                 await self.get(message, params)
             elif keyword == 'getall':
-                await self.get(message, params)
+                await self.get_all(message, params)
             else:
                 await self.error(message, 'Command not found. Use "!ni help" for more info!')
 
@@ -126,7 +125,6 @@ class DiscordExtension(discord.Client):
 
         if len(params) != 5:
             await self.error(message, 'Add command takes exactly 3 parameters!')
-
             return
 
         title = params[2]
@@ -138,7 +136,13 @@ class DiscordExtension(discord.Client):
             tags=tags,
             author=message.author.name
         )
-        note = self.note_repository.create(note)
+
+        try:
+            note = self.note_repository.create(note)
+        except Exception as e:
+            await self.error(message, str(e))
+            return
+
         response = note.to_json()
 
         await message.author.send(response)
@@ -153,14 +157,26 @@ class DiscordExtension(discord.Client):
 
         if len(params) != 3:
             await self.error(message, 'Delete command takes exactly 1 parameters!')
-
             return
 
         id = params[2]
-        note = self.note_repository.get(id=id)
+
+        try:
+            note = self.note_repository.get(id=id)
+        except Exception as e:
+            await self.error(message, str(e))
+            return
+
+        if not note:
+            await self.error(message, 'Note not found!')
+            return
 
         if note.author == message.author.name:
-            deleted = self.note_repository.delete(id=id)
+            try:
+                deleted = self.note_repository.delete(id=id)
+            except Exception as e:
+                await self.error(message, str(e))
+                return
 
             response = json.dumps({
                 'deleted': deleted
@@ -184,7 +200,6 @@ class DiscordExtension(discord.Client):
 
         if len(params) != 6:
             await self.error(message, 'Patch command takes exactly 4 parameters!')
-
             return
 
         id = params[2]
@@ -192,10 +207,22 @@ class DiscordExtension(discord.Client):
         body = params[4]
         tags = params[5].split(',')
 
-        note = self.note_repository.get(id=id)
+        try:
+            note = self.note_repository.get(id=id)
+        except Exception as e:
+            await self.error(message, str(e))
+            return
+
+        if not note:
+            await self.error(message, 'Note not found!')
+            return
 
         if note.author == message.author.name:
-            updated = self.note_repository.update(id, set__title=title, set__body=body, set__tags=tags)
+            try:
+                updated = self.note_repository.update(id, set__title=title, set__body=body, set__tags=tags)
+            except Exception as e:
+                await self.error(message, str(e))
+                return
 
             response = json.dumps({
                 'updated': updated
@@ -219,11 +246,20 @@ class DiscordExtension(discord.Client):
 
         if len(params) != 3:
             await self.error(message, 'Get command takes exactly 1 parameters!')
-
             return
 
         id = params[2]
-        note = self.note_repository.get(id=id)
+
+        try:
+            note = self.note_repository.get(id=id)
+        except Exception as e:
+            await self.error(message, str(e))
+            return
+
+        if not note:
+            await self.error(message, 'Note not found!')
+            return
+
         response = note.to_json()
 
         await message.author.send(response)
@@ -239,7 +275,12 @@ class DiscordExtension(discord.Client):
         if len(params) != 2:
             await self.error(message, 'Get all command takes no parameters!')
 
-        notes = self.note_repository.get_many()
+        try:
+            notes = self.note_repository.get_many()
+        except Exception as e:
+            await self.error(message, str(e))
+            return
+
         response = notes.to_json()
 
         await message.author.send(response)
@@ -273,11 +314,7 @@ class DiscordExtension(discord.Client):
         """
 
         response = json.dumps({
-            'error': 'Invalid request parameters. Make sure that you formatted your message correctly!'
+            'error': error
         })
 
         await message.author.send(response)
-
-
-if __name__ == '__main__':
-    discord = DiscordExtension.get_instance()
